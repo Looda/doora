@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="cs">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg">
+  <title>Doora</title>
+</head>
+<style>
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    font-family: system-ui, sans-serif;
+    background: linear-gradient(160deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+    color: #e0e0e0;
+  }
+
+  .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2.5rem;
+    padding: 3rem 1rem 6rem;
+    width: 100%;
+  }
+
+  .pwd-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    width: 100%;
+    max-width: 22rem;
+  }
+
+  .pwd-wrap label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #90a4c8;
+  }
+
+  .pwd-row {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  #pwd {
+    flex: 1;
+    min-width: 0;
+    border: 2px solid #2d4a7a;
+    border-radius: 0.75rem;
+    height: 3.5rem;
+    font-size: 1.25rem;
+    padding: 0 1rem;
+    background: rgba(255, 255, 255, 0.07);
+    color: #e0e0e0;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  #pwd:focus {
+    border-color: #5b8dee;
+  }
+
+  #pwd.invalid {
+    border-color: #e05555;
+  }
+
+  #pwd::placeholder {
+    color: #4a6080;
+  }
+
+  #pwd-toggle {
+    border: 2px solid #2d4a7a;
+    border-radius: 0.75rem;
+    height: 3.5rem;
+    width: 3.5rem;
+    font-size: 1.3rem;
+    background: rgba(255, 255, 255, 0.07);
+    color: #90a4c8;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    flex-shrink: 0;
+  }
+
+  #pwd-toggle:hover {
+    background: rgba(91, 141, 238, 0.2);
+    border-color: #5b8dee;
+  }
+
+  .keep-pwd {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    width: fit-content;
+  }
+
+  .keep-pwd input[type=checkbox] {
+    width: 1.15rem;
+    height: 1.15rem;
+    accent-color: #5b8dee;
+    cursor: pointer;
+  }
+
+  .keep-pwd span {
+    font-size: 0.85rem;
+    color: #90a4c8;
+  }
+
+  #open-btn {
+    padding: 1rem;
+    border-radius: 2rem;
+    border: none;
+    font-size: 4rem;
+    background: linear-gradient(145deg, #5b8dee, #3a6bc9);
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 8px 32px rgba(91, 141, 238, 0.45), 0 2px 8px rgba(0, 0, 0, 0.4);
+    transition: transform 0.15s, box-shadow 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  #open-btn:active {
+    transform: scale(0.94);
+    box-shadow: 0 4px 16px rgba(91, 141, 238, 0.35);
+  }
+
+  #help-btn {
+    background: none;
+    border: none;
+    color: #5b8dee;
+    font-size: 0.95rem;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  #help-text {
+    display: none;
+    max-width: 22rem;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid #2d4a7a;
+    border-radius: 0.75rem;
+    padding: 1rem 1.25rem;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: #a0b8d8;
+    text-align: left;
+  }
+
+  #help-text.open {
+    display: block;
+  }
+
+  footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 0.5rem;
+    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+    text-align: center;
+    font-size: 0.75rem;
+    color: #3d5470;
+  }
+
+  a {
+    font-size: 0.75rem;
+    color: #3d5470;
+  }
+</style>
+<script type="text/javascript">
+  function onKeepPwd() {
+    const keep = document.getElementById('keep-pwd').checked;
+    if (keep) localStorage.setItem('pwd', document.getElementById('pwd').value);
+    else localStorage.removeItem('pwd');
+  }
+
+  function syncPwd() {
+    const input = document.getElementById('pwd');
+    input.classList.remove('invalid');
+    if (document.getElementById('keep-pwd').checked)
+      localStorage.setItem('pwd', input.value);
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('pwd');
+    if (saved) {
+      document.getElementById('pwd').value = saved;
+      document.getElementById('keep-pwd').checked = true;
+    }
+  });
+
+  function togglePwd() {
+    const input = document.getElementById('pwd');
+    const btn = document.getElementById('pwd-toggle');
+    const show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    btn.textContent = show ? '🙈' : '👁';
+  }
+
+  async function sha256(message) {
+    const msgBuffer = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    return Array.from(new Uint8Array(hashBuffer))
+      .map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+  async function calculateResponse(user, pass, realm, nonce, method, uri) {
+    const cnonce = Math.floor(Math.random() * 1000000);
+    const nc = 1;
+    const ha1 = await sha256(`${user}:${realm}:${pass}`);
+    const ha2 = await sha256(`${method || 'dummy_method'}:${uri || 'dummy_uri'}`);
+    const response = await sha256(`${ha1}:${nonce}:${nc}:${cnonce}:auth:${ha2}`);
+    return {
+      realm,
+      username: user,
+      nonce,
+      cnonce,
+      nc: nc,
+      algorithm: "SHA-256",
+      response
+    };
+  }
+
+  async function connectAndTurnOn() {
+    const SVC_UUID = '5f6d4f53-5f52-5043-5f53-56435f49445f';
+    const DATA_UUID = '5f6d4f53-5f52-5043-5f64-6174615f5f5f';
+    try {
+      const device = await navigator.bluetooth.requestDevice({
+        filters: [{ namePrefix: 'Shelly' }],
+        optionalServices: [SVC_UUID]
+      });
+
+      const server = await device.gatt.connect();
+      const service = await server.getPrimaryService(SVC_UUID);
+      const dataChar = await service.getCharacteristic(DATA_UUID);
+
+      const sendJson = async (jsonObj) => {
+        const encoder = new TextEncoder();
+        const jsonString = JSON.stringify(jsonObj);
+        const data = encoder.encode(jsonString + '\0');
+        try {
+          const resp = await dataChar.writeValueWithResponse(data);
+        } catch (e) {
+          await dataChar.writeValue(data);
+        }
+      };
+
+      const sendAuthJson = async (user, pwd, realm, nonce, method, suffix) => {
+        const authData = await calculateResponse(
+          user,
+          pwd,
+          realm,
+          nonce,
+          method,
+          suffix,
+        );
+
+        const authorizedCommand = {
+          id: 2,
+          method: "Switch.Toggle",
+          src: "web_app",
+          params: { id: 0 },
+          auth: authData
+        };
+
+        replyPromise = new Promise(res => resolveReply = res);
+        await sendJson(authorizedCommand);
+        let secondReply = await replyPromise;
+        if (secondReply.error) {
+          console.log("Authorization failed:", secondReply.error);
+          document.getElementById('pwd').classList.add('invalid');
+        } else {
+          console.log("Authorized!");
+        }
+      }
+
+      await dataChar.startNotifications();
+
+      let resolveReply;
+      dataChar.addEventListener('characteristicvaluechanged', (event) => {
+        const reply = JSON.parse(new TextDecoder().decode(event.target.value));
+        if (resolveReply) resolveReply(reply);
+      });
+
+      let command = { id: 1, method: "Switch.Toggle", params: { id: 0 } };
+
+      let replyPromise = new Promise(res => resolveReply = res);
+      await sendJson(command);
+      let firstReply = await replyPromise;
+
+      if (firstReply.error && firstReply.error.code === 401) {
+
+        const firstReplyData = JSON.parse(firstReply.error.message);
+        const elem = document.getElementById("pwd");
+        const password = elem.value;
+        if (!password) {
+          document.getElementById('pwd').classList.add('invalid');
+          return;
+        }
+
+        await sendAuthJson('admin', password, firstReplyData.realm, firstReplyData.nonce, '', '');
+      } else {
+        console.log("Done without authorization.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  }
+</script>
+
+<body>
+  <div class="container">
+    <div class="pwd-wrap">
+      <label for="pwd">Password</label>
+      <div class="pwd-row">
+        <input id="pwd" type="password" oninput="syncPwd()">
+        <button id="pwd-toggle" onclick="togglePwd()" type="button">👁</button>
+      </div>
+      <label class="keep-pwd">
+        <input id="keep-pwd" type="checkbox" onchange="onKeepPwd()">
+        <span>Keep password</span>
+      </label>
+    </div>
+    <button id="open-btn" onclick="connectAndTurnOn()">Open</button>
+    <button id="help-btn" onclick="document.getElementById('help-text').classList.toggle('open')">Help</button>
+    <div id="help-text">
+      This Doora application connects to Shelly switch device with enabled Bluetooth and calls toggle action.<br><br>
+      To use it with Step-Stop-Step gates add <strong>Automatic Off delay: 1s</strong> in Shelly configuration.<br><br>
+      Password protection is set by Shelly Settings/Authorization (currently visible only in Shelly web administration).
+    </div>
+  </div>
+  <footer><a href="https://aplikace.sdileni.online/doora" target="_blank" rel="noopener noreferrer">Doora</a> -
+    Bluetooth door
+    manager. v1.0</footer>
+</body>
+<script>
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+</script>
+
+</html>

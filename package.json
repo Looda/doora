@@ -1,0 +1,25 @@
+{
+  "name": "Doora",
+  "version": "1.0.0",
+  "description": "",
+  "main": "sw.js",
+  "scripts": {
+    "build": "npm run copy && html-minifier-terser src/index.html --collapse-whitespace --remove-comments --minify-css true --minify-js true -o dist/index.html",
+    "copy": "shx cp src/assets/* dist"
+  },
+  "keywords": [
+    "Shelly",
+    "bluetooth",
+    "gate"
+  ],
+  "author": "Looda",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "html-minifier-terser": "^7.2.0"
+  },
+  "dependencies": {
+    "save-dev": "^0.0.1-security",
+    "shx": "^0.4.0"
+  }
+}
