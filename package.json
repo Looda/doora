@@ -1,10 +1,11 @@
 {
   "name": "Doora",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "",
   "main": "sw.js",
   "scripts": {
     "build": "npm run copy && html-minifier-terser src/index.html --collapse-whitespace --remove-comments --minify-css true --minify-js true -o dist/index.html",
+    "build:dev": "npm run copy && html-minifier-terser src/index.html -o dist/index.html",
     "copy": "shx cp src/assets/* dist"
   },
   "keywords": [

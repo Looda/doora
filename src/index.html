@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#ffffff">
+  <meta name="theme-color" content="#0f3460">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon.svg">
   <title>Doora</title>
@@ -39,7 +39,7 @@
     width: 100%;
   }
 
-  .pwd-wrap {
+  .field-wrap {
     display: flex;
     flex-direction: column;
     gap: 0.6rem;
@@ -47,7 +47,7 @@
     max-width: 22rem;
   }
 
-  .pwd-wrap label {
+  .field-wrap label {
     font-size: 0.95rem;
     font-weight: 600;
     letter-spacing: 0.08em;
@@ -58,6 +58,38 @@
   .pwd-row {
     display: flex;
     gap: 0.5rem;
+  }
+
+  #device {
+    border: 2px solid #2d4a7a;
+    border-radius: 0.75rem;
+    height: 3.5rem;
+    font-size: 1.25rem;
+    padding: 0 1rem;
+    background: rgba(255, 255, 255, 0.07);
+    color: #e0e0e0;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  #device:focus {
+    border-color: #5b8dee;
+  }
+
+  #device option {
+    font-size: 1.25rem;
+    color: #e0e0e0;
+    background: rgba(255, 255, 255, 0.07);
+  }
+
+  input {
+    min-width: 0;
+    border: 2px solid #2d4a7a;
+    border-radius: 0.3rem;
+    background: rgba(255, 255, 255, 0.07);
+    color: #e0e0e0;
+    outline: none;
+    transition: border-color 0.2s;
   }
 
   #pwd {
@@ -104,7 +136,7 @@
     border-color: #5b8dee;
   }
 
-  .keep-pwd {
+  .settings {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -112,14 +144,22 @@
     width: fit-content;
   }
 
-  .keep-pwd input[type=checkbox] {
+  .settings input[type=checkbox] {
     width: 1.15rem;
     height: 1.15rem;
     accent-color: #5b8dee;
     cursor: pointer;
   }
 
-  .keep-pwd span {
+  .settings input[type=text] {
+    border-radius: 0.2rem;
+    font-size: 1.25rem;
+    font-size: 0.9rem;
+    height: 2rem;
+    padding: 0.3rem;
+  }
+
+  .settings span {
     font-size: 0.85rem;
     color: #90a4c8;
   }
@@ -137,23 +177,29 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  #open-btn.error {
+    border-color: #e05555;
+    border-width: 2px;
+    border-style: solid;
+  }
+
   #open-btn:active {
     transform: scale(0.94);
     box-shadow: 0 4px 16px rgba(91, 141, 238, 0.35);
   }
 
-  #help-btn {
+  .help-btn {
     background: none;
     border: none;
     color: #5b8dee;
     font-size: 0.95rem;
     cursor: pointer;
-    padding: 0;
+    padding: 0 1rem;
     text-decoration: underline;
     text-underline-offset: 3px;
   }
 
-  #help-text {
+  .help-text {
     display: none;
     max-width: 22rem;
     background: rgba(255, 255, 255, 0.06);
@@ -166,7 +212,7 @@
     text-align: left;
   }
 
-  #help-text.open {
+  .help-text.open {
     display: block;
   }
 
@@ -186,28 +232,71 @@
     font-size: 0.75rem;
     color: #3d5470;
   }
+
+  hr {
+    border-color: #2d4a7a;
+  }
 </style>
 <script type="text/javascript">
+  const SVC_UUID = '5f6d4f53-5f52-5043-5f53-56435f49445f';
+  const DATA_UUID = '5f6d4f53-5f52-5043-5f64-6174615f5f5f';
+  const USER = 'admin';
+  const NEW_DEVICE_OPTION = 'new';
+
+  const commands = {
+    'toggle': { id: 1, method: "Switch.Toggle", params: { id: 0 } },
+    'turn-on-05s': { id: 1, method: "Switch.Set", params: { id: 0, on: true, toggle_after: 0.5 } }
+  }
+
+  const addAuthToCommand = (auth, command) => {
+    return {
+      ...command,
+      id: 2,
+      auth,
+    }
+  }
+
+  const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+  function getPasswordStoreKey(device) {
+    return `${device}_pwd`;
+  }
+
+  function keepPwd(deviceId) {
+    return document.getElementById('keep-pwd').checked && deviceId !== NEW_DEVICE_OPTION;
+  }
+
   function onKeepPwd() {
-    const keep = document.getElementById('keep-pwd').checked;
-    if (keep) localStorage.setItem('pwd', document.getElementById('pwd').value);
-    else localStorage.removeItem('pwd');
+    const deviceId = document.getElementById('device').value;
+    const storeKey = getPasswordStoreKey(deviceId);
+    if (keepPwd(deviceId)) {
+      localStorage.setItem(storeKey, document.getElementById('pwd').value);
+    } else {
+      localStorage.removeItem(storeKey);
+    }
+  }
+
+  function onConfig(element) {
+    const value = element.type === 'checkbox' ? element.checked : element.value;
+    localStorage.setItem(element.id, value);
+  }
+
+  function readConfig(elementId) {
+    const element = document.getElementById(elementId);
+    if (element.type === 'checkbox') {
+      element.checked = localStorage.getItem(elementId) === 'true';
+    } else {
+      element.value = localStorage.getItem(elementId);
+    }
   }
 
   function syncPwd() {
     const input = document.getElementById('pwd');
+    const deviceId = document.getElementById('device').value;
     input.classList.remove('invalid');
-    if (document.getElementById('keep-pwd').checked)
-      localStorage.setItem('pwd', input.value);
+    if (keepPwd(deviceId))
+      localStorage.setItem(getPasswordStoreKey(deviceId), input.value);
   }
-
-  window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('pwd');
-    if (saved) {
-      document.getElementById('pwd').value = saved;
-      document.getElementById('keep-pwd').checked = true;
-    }
-  });
 
   function togglePwd() {
     const input = document.getElementById('pwd');
@@ -223,6 +312,7 @@
     return Array.from(new Uint8Array(hashBuffer))
       .map(b => b.toString(16).padStart(2, '0')).join('');
   }
+
   async function calculateResponse(user, pass, realm, nonce, method, uri) {
     const cnonce = Math.floor(Math.random() * 1000000);
     const nc = 1;
@@ -240,120 +330,324 @@
     };
   }
 
-  async function connectAndTurnOn() {
-    const SVC_UUID = '5f6d4f53-5f52-5043-5f53-56435f49445f';
-    const DATA_UUID = '5f6d4f53-5f52-5043-5f64-6174615f5f5f';
-    try {
-      const device = await navigator.bluetooth.requestDevice({
-        filters: [{ namePrefix: 'Shelly' }],
-        optionalServices: [SVC_UUID]
-      });
-
-      const server = await device.gatt.connect();
-      const service = await server.getPrimaryService(SVC_UUID);
-      const dataChar = await service.getCharacteristic(DATA_UUID);
-
-      const sendJson = async (jsonObj) => {
-        const encoder = new TextEncoder();
-        const jsonString = JSON.stringify(jsonObj);
-        const data = encoder.encode(jsonString + '\0');
-        try {
-          const resp = await dataChar.writeValueWithResponse(data);
-        } catch (e) {
-          await dataChar.writeValue(data);
-        }
+  async function sendJson(dataChar, jsonObj) {
+    return new Promise((resolve, reject) => {
+      const callback = (event) => {
+        const reply = JSON.parse(new TextDecoder().decode(event.target.value));
+        dataChar.removeEventListener('characteristicvaluechanged', callback);
+        resolve(reply);
       };
 
-      const sendAuthJson = async (user, pwd, realm, nonce, method, suffix) => {
-        const authData = await calculateResponse(
-          user,
-          pwd,
-          realm,
-          nonce,
-          method,
-          suffix,
-        );
+      dataChar.addEventListener('characteristicvaluechanged', callback);
 
-        const authorizedCommand = {
-          id: 2,
-          method: "Switch.Toggle",
-          src: "web_app",
-          params: { id: 0 },
-          auth: authData
-        };
+      const data = new TextEncoder().encode(JSON.stringify(jsonObj) + '\0');
+      dataChar.writeValue(data).catch(reject);
+    });
+  }
 
-        replyPromise = new Promise(res => resolveReply = res);
-        await sendJson(authorizedCommand);
-        let secondReply = await replyPromise;
-        if (secondReply.error) {
-          console.log("Authorization failed:", secondReply.error);
-          document.getElementById('pwd').classList.add('invalid');
-        } else {
-          console.log("Authorized!");
-        }
-      }
+  const sendAuthJson = async (dataChar, jsonObj, user, pwd, realm, nonce, method, suffix) => {
+    const authData = await calculateResponse(
+      user,
+      pwd,
+      realm,
+      nonce,
+      method,
+      suffix,
+    );
 
-      await dataChar.startNotifications();
+    const authorizedCommand = addAuthToCommand(authData, jsonObj);
 
-      let resolveReply;
-      dataChar.addEventListener('characteristicvaluechanged', (event) => {
-        const reply = JSON.parse(new TextDecoder().decode(event.target.value));
-        if (resolveReply) resolveReply(reply);
-      });
-
-      let command = { id: 1, method: "Switch.Toggle", params: { id: 0 } };
-
-      let replyPromise = new Promise(res => resolveReply = res);
-      await sendJson(command);
-      let firstReply = await replyPromise;
-
-      if (firstReply.error && firstReply.error.code === 401) {
-
-        const firstReplyData = JSON.parse(firstReply.error.message);
-        const elem = document.getElementById("pwd");
-        const password = elem.value;
-        if (!password) {
-          document.getElementById('pwd').classList.add('invalid');
-          return;
-        }
-
-        await sendAuthJson('admin', password, firstReplyData.realm, firstReplyData.nonce, '', '');
-      } else {
-        console.log("Done without authorization.");
-      }
-    } catch (error) {
-      console.error("Error:", error);
+    const secondReply = await sendJson(dataChar, authorizedCommand);
+    if (secondReply.error) {
+      console.log("Authorization failed:", secondReply.error);
+      return false;
+    } else {
+      return true;
     }
   }
+
+  async function getKnownDevices() {
+    let devices = [];
+    if (navigator.bluetooth.getDevices) {
+      try {
+        devices = await navigator.bluetooth.getDevices();
+      } catch {
+        console.log('Error: getDevices');
+      }
+    }
+    return devices;
+  }
+
+  function setLoading() {
+    const btn = document.getElementById('open-btn');
+    btn.textContent = '🕑';
+  }
+
+  function setReady() {
+    const btn = document.getElementById('open-btn');
+    btn.classList.remove('error');
+    btn.textContent = '▶️';
+  }
+
+  function setError() {
+    const btn = document.getElementById('open-btn');
+    btn.classList.add('error');
+    btn.textContent = '▶️';
+  }
+
+  function setPasswordInvalid(invalid) {
+    if (invalid) {
+      document.getElementById('pwd').classList.add('invalid');
+    } else {
+      document.getElementById('pwd').classList.remove('invalid');
+    }
+  }
+
+  async function connectBTServer(device) {
+    if (device) {
+      try {
+        if (device && device.gatt.connected) {
+          return device.gatt;
+        } else {
+          const server = await device.gatt.connect();
+          return server;
+        }
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  async function openViaBT(server, command, password) {
+    const service = await server.getPrimaryService(SVC_UUID);
+    const dataChar = await service.getCharacteristic(DATA_UUID);
+
+    await dataChar.startNotifications();
+    const commandJson = commands[command];
+
+    const firstReply = await sendJson(dataChar, commandJson);
+
+    if (firstReply.error && firstReply.error.code === 401) {
+
+      const firstReplyData = JSON.parse(firstReply.error.message);
+      const password = document.getElementById("pwd").value;
+      if (!password) {
+        setPasswordInvalid(true);
+        setReady();
+        return;
+      }
+      await delay(500);
+      const result = await sendAuthJson(dataChar, commandJson, USER, password, firstReplyData.realm, firstReplyData.nonce, '', '');
+      setPasswordInvalid(!result);
+    } else {
+      console.log("Done without authorization.");
+    }
+  }
+
+  async function connectAndTurnOn() {
+    setLoading();
+    try {
+      const command = document.getElementById('auto-off').checked ? 'turn-on-05s' : 'toggle';
+      const password = document.getElementById("pwd").value;
+      const allowApi = document.getElementById('allow-api').checked;
+      let devices = await getKnownDevices();
+      const selectedDevice = document.getElementById('device').value;
+      let btDevice = devices.find(d => d.id === selectedDevice);
+      let server = await connectBTServer(btDevice);
+      if (selectedDevice !== NEW_DEVICE_OPTION && !server && allowApi) {
+        openViaMqtt(selectedDevice, password, command);
+        return;
+      }
+      if (!server) {
+        btDevice = await navigator.bluetooth.requestDevice({
+          filters: [{ namePrefix: 'Shelly' }],
+          optionalServices: [SVC_UUID]
+        });
+        if (btDevice) {
+          createDeviceOption(btDevice.id, btDevice.name);
+          const deviceElement = document.getElementById('device');
+          deviceElement.value = btDevice.id;
+          const devices = [...deviceElement.options].filter((option) => option.value !== 'new').map((option) => ({ id: option.value, name: option.text }))
+          localStorage.setItem('devices', JSON.stringify(devices));
+          localStorage.setItem('lastDeviceId', btDevice.id);
+          setPasswordByDeviceId(btDevice.id);
+        }
+        server = await btDevice.gatt.connect();
+      }
+      if (!btDevice || !server) {
+        return;
+      }
+      openViaBT(server, command, password);
+      await delay(500);
+    } catch (error) {
+      console.error("Error:", error);
+      setError();
+      await delay(500);
+    } finally {
+      setReady();
+    };
+  }
+
+  async function deviceChanged() {
+    const deviceId = document.getElementById('device').value;
+    localStorage.setItem('lastDeviceId', deviceId);
+    setPasswordByDeviceId(deviceId);
+  }
+
+  function setPasswordByDeviceId(deviceId) {
+    const savedPwd = localStorage.getItem(getPasswordStoreKey(deviceId));
+    document.getElementById('pwd').value = savedPwd || '';
+    document.getElementById('keep-pwd').checked = savedPwd !== null;
+  }
+
+  function createDeviceOption(id, name) {
+    const deviceElement = document.getElementById('device');
+    let i = 0;
+    while (i < deviceElement.options.length) {
+      if (deviceElement.options.item(i).value === id) {
+        return;
+      }
+      i++;
+    }
+    const item = document.createElement("option");
+    item.value = id;
+    item.textContent = name;
+    deviceElement.add(item);
+  }
+
+  async function initApp() {
+    readConfig('auto-off');
+    readConfig('allow-api');
+    readConfig('api-server');
+
+    const devices = JSON.parse(localStorage.getItem('devices')) || [];
+    const deviceElement = document.getElementById('device');
+    if (deviceElement.options.length === 1 && devices.length > 0) {
+      devices.forEach((device) => {
+        createDeviceOption(device.id, device.name);
+      });
+    }
+    const savedId = localStorage.getItem('lastDeviceId');
+    if (savedId) {
+      deviceElement.value = savedId;
+      setPasswordByDeviceId(savedId);
+    }
+  }
+
+  function copyLink() {
+    navigator.clipboard.writeText('chrome://flags/#web-bluetooth-new-permissions-backend');
+  }
+
+  function openText(name) {
+    if (name === 'config') {
+      document.getElementById('config-text').classList.toggle('open')
+      document.getElementById('help-text').classList.remove('open')
+    } else {
+      document.getElementById('config-text').classList.remove('open')
+      document.getElementById('help-text').classList.toggle('open')
+    }
+  }
+
+  async function openViaMqtt(deviceId, password, command) {
+    const server = document.getElementById('api-server').value;
+    const deviceElement = document.getElementById('device');
+    const device = [...deviceElement.options].find((option) => option.value === deviceId);
+    if (!server || !device || !password) {
+      return;
+    }
+    setLoading();
+    try {
+      const response = await fetch(`${server}/command`, {
+        method: 'GET',
+        headers: {
+          'x-mqtt-user': device.text,
+          'x-mqtt-pass': password,
+          'x-mqtt-command': command,
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setReady();
+      } else {
+        const err = await response.json();
+        setError();
+        await delay(500);
+        setReady();
+      }
+    } catch (e) {
+      console.error("Network error:", e);
+      setError();
+      await delay(500);
+      setReady();
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initApp();
+  });
 </script>
 
 <body>
   <div class="container">
-    <div class="pwd-wrap">
+    <div class="field-wrap">
+      <label for="device">Device</label>
+      <select id="device" onchange="deviceChanged()">
+        <option value="new">+ New device</option>
+      </select>
+    </div>
+    <div class="field-wrap">
       <label for="pwd">Password</label>
       <div class="pwd-row">
         <input id="pwd" type="password" oninput="syncPwd()">
         <button id="pwd-toggle" onclick="togglePwd()" type="button">👁</button>
       </div>
-      <label class="keep-pwd">
+      <label class="settings">
         <input id="keep-pwd" type="checkbox" onchange="onKeepPwd()">
         <span>Keep password</span>
       </label>
     </div>
-    <button id="open-btn" onclick="connectAndTurnOn()">Open</button>
-    <button id="help-btn" onclick="document.getElementById('help-text').classList.toggle('open')">Help</button>
-    <div id="help-text">
-      This Doora application connects to Shelly switch device with enabled Bluetooth and calls toggle action.<br><br>
-      To use it with Step-Stop-Step gates add <strong>Automatic Off delay: 1s</strong> in Shelly configuration.<br><br>
-      Password protection is set by Shelly Settings/Authorization (currently visible only in Shelly web administration).
+    <button id="open-btn" onclick="connectAndTurnOn()">▶️</button>
+    <div>
+      <button class="help-btn" onclick="openText('config')">Config</button>
+      <button class="help-btn" onclick="openText('help')">Help</button>
+    </div>
+    <div>
+      <div class="help-text" id="config-text">
+        <label class="settings">
+          <input id="auto-off" type="checkbox" onchange="onConfig(this)">
+          <span>Automatic off after 0.5s</span>
+        </label>
+        <label class="settings">
+          <input id="allow-api" type="checkbox" onchange="onConfig(this)">
+          <span>Use api without BT connection</span>
+        </label>
+        <label class="settings">
+          <span>Server:</span>
+          <input id="api-server" oninput="onConfig(this)">
+        </label>
+        <hr />
+        To keep access to BT devices you have to enable <b>Web Bluetooth new permissions backend</b>
+        and relaunch the application.<br />
+        Copy this into your browser <b onclick="copyLink()" style="cursor: pointer;">
+          chrome://flags/#web-bluetooth-new-permissions-backend</b>
+      </div>
+      <div class="help-text" id="help-text">
+        This Doora application connects to Shelly switch device with enabled Bluetooth and calls toggle action.<br><br>
+        Password protection is set by Shelly Settings/Authorization (currently visible only in Shelly web
+        administration).
+      </div>
     </div>
   </div>
   <footer><a href="https://aplikace.sdileni.online/doora" target="_blank" rel="noopener noreferrer">Doora</a> -
     Bluetooth door
-    manager. v1.0</footer>
+    manager. v1.2</footer>
 </body>
 <script>
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
 </script>
 
 </html>
