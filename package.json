@@ -1,26 +1,26 @@
 {
   "name": "Doora",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "",
   "main": "sw.js",
   "scripts": {
-    "build": "npm run copy && html-minifier-terser src/index.html --collapse-whitespace --remove-comments --minify-css true --minify-js true -o dist/index.html",
-    "build:dev": "npm run copy && html-minifier-terser src/index.html -o dist/index.html",
+    "build": "npm run copy && inline-assets --htmlmin --cssmin --jsmin src/index.html dist/index.html",
+    "build:dev": "npm run copy && inline-assets src/index.html dist/index.html",
     "copy": "shx cp src/assets/* dist"
   },
   "keywords": [
     "Shelly",
     "bluetooth",
+    "mqtt",
     "gate"
   ],
   "author": "Looda",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
-    "html-minifier-terser": "^7.2.0"
+    "inline-assets": "^1.5.1"
   },
   "dependencies": {
-    "save-dev": "^0.0.1-security",
     "shx": "^0.4.0"
   }
 }
