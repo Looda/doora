@@ -4,7 +4,7 @@
   "description": "",
   "main": "sw.js",
   "scripts": {
-    "build": "npm run copy && inline-assets --htmlmin --cssmin --jsmin src/index.html dist/index.html",
+    "build": "npm run copy && inline-assets src/index.html dist/index.html && html-minifier-terser dist/index.html --collapse-whitespace --remove-comments --minify-css true --minify-js true -o dist/index.html",
     "build:dev": "npm run copy && inline-assets src/index.html dist/index.html",
     "copy": "shx cp src/assets/* dist"
   },
@@ -18,9 +18,8 @@
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
-    "inline-assets": "^1.5.1"
-  },
-  "dependencies": {
+    "inline-assets": "^1.5.1",
+    "html-minifier-terser": "^7.2.0",
     "shx": "^0.4.0"
   }
 }

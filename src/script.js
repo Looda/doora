@@ -59,6 +59,8 @@ function toggleDevice() {
   device.style.display = showEdit ? 'block' : 'none';
   deviceEdit.style.display = showEdit ? 'none' : 'block';
   btn.textContent = showEdit ? '⌨️' : '🔍';
+  const deviceOptions = device.options ?? [];
+  deviceEdit.value = [...deviceOptions].find(({value}) => value === MANUAL_DEVICE_OPTION).text ?? '';
 }
 
 function setLoading() {

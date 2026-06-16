@@ -18,17 +18,17 @@
     <div class="field-wrap">
       <label for="device">Device</label>
       <div class="field-row">
-        <select id="device" class="device" onchange="deviceChanged()">
+        <select id="device" class="device edit-field" onchange="deviceChanged()">
           <option value="new">+ New device</option>
         </select>
-        <input id="device-edit" style="display: none;" type="text" oninput="deviceChanged()" class="device">
+        <input id="device-edit" style="display: none;" type="text" oninput="deviceChanged()" class="device edit-field">
         <button id="device-toggle" class="btn-toggle" onclick="toggleDevice()" type="button">⌨️</button>
       </div>
     </div>
     <div class="field-wrap">
       <label for="pwd">Password</label>
       <div class="field-row">
-        <input id="pwd" type="password" oninput="syncPwd()">
+        <input id="pwd" class="edit-field" type="password" oninput="syncPwd()">
         <button id="pwd-toggle" class="btn-toggle" onclick="togglePwd()" type="button">👁</button>
       </div>
       <label class="settings">
